@@ -17,7 +17,17 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitLogger(infoPath, errorPath string) error {
+func InitLogger() error {
+	logDir := "log"
+	infoPath := fmt.Sprintf("%s/info.log", logDir)
+	errorPath := fmt.Sprintf("%s/info.log", logDir)
+
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
+		if err = os.Mkdir(logDir, os.ModePerm); err != nil {
+			log.Fatal("unable to create /log directory")
+		}
+	}
+
 	highPriority := zap.LevelEnablerFunc(func(lev zapcore.Level) bool {
 		return lev >= zap.ErrorLevel
 	})
@@ -107,9 +117,7 @@ func InitDB() error {
 
 func main() {
 	// Logging
-	infoLogFilepath := "logs/info.log"
-	errorLogFilepath := "logs/error.log"
-	err := InitLogger(infoLogFilepath, errorLogFilepath)
+	err := InitLogger()
 	if err != nil {
 		log.Fatal("failed to initialise logger", err)
 	}
