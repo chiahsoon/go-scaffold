@@ -1,0 +1,27 @@
+settings:
+  legacy:
+    force: false
+    interval: 0s
+schema:
+  - name: scaffold-api
+    path: .
+#    env:
+#      ENV: dev
+    commands:
+      install:
+        status: true
+        method: go build -o bin/scaffold-api cmd/api/run.go
+      run:
+        status: true
+        method: bin/scaffold-api
+    watcher:
+      extensions:
+        - go
+      paths:
+        - /
+      ignored_paths:
+        - .git
+        - .realize
+        - vendor
+        - bin
+        - log

@@ -1,0 +1,22 @@
+run:
+  skip-dirs:
+    - docs
+
+linters-settings:
+  maligned:
+    suggest-new: true
+  gocritic:
+    disabled-checks:
+      - singleCaseSwitch
+
+linters:
+  disable:
+    - gochecknoglobals
+    - funlen
+    - wsl
+    - nlreturn
+    - wrapcheck
+    - godot
+    - exhaustivestruct
+    - gosec
+  enable-all: true
