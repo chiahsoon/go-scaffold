@@ -43,8 +43,7 @@ func NewRouter() *Router {
 func (r *Router) Run() {
 	port := ":" + viper.GetString("port")
 
-	err := r.Engine.Run(port)
-	if err != nil {
+	if err := r.Engine.Run(port); err != nil {
 		log.Fatal("failed to start server: \n", err)
 	}
 }
