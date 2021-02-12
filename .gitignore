@@ -4,3 +4,4 @@ docs/docs.go
 docs/swagger.*
 go.sum*.tmp
 go.mod*.tmp
+bin
