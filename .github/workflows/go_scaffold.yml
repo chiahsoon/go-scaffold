@@ -1,17 +1,6 @@
 name: go_scaffold
 
-on:
-  push:
-    tags:
-      - v*
-    branches:
-      - master
-      - main
-  pull_request:
-    branches:
-      - master
-      - main
-
+on: [push, pull_request]
 
 jobs:
   build:
