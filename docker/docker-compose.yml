@@ -1,0 +1,43 @@
+# Docker Compose
+version: '3'
+
+services:
+  db:
+    container_name: db
+    restart: always
+    image: mysql
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_DATABASE=go_scaffold
+    ports:
+      - 3306:3306 # host:container
+
+  api:
+    container_name: api
+    build: ../
+    ports:
+      - 5000:5001 # host:container
+    environment:
+      - ENV=docker-dev
+      - PORT=5001
+    command: ./wait-for-it.sh -t 60 db:3306 -- go run cmd/api/run.go
+
+#  api_2:
+#    build: .
+#    ports:
+#      - 5002:5001 # host:container
+#    environment:
+#      - ENV=docker-dev
+#      - PORT=5001
+#    command: ./wait-for-it.sh -t 60 db:3306 -- go run cmd/api/run.go
+
+  reverse_proxy:
+    container_name: reverse_proxy
+    image: nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
