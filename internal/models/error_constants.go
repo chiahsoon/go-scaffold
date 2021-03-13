@@ -1,4 +1,4 @@
-package model
+package models
 
 const (
 	DBError               = "database_error"

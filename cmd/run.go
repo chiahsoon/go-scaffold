@@ -4,11 +4,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/chiahsoon/go_scaffold/internal/models"
+	"github.com/chiahsoon/go_scaffold/internal/models/users"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/chiahsoon/go_scaffold/internal/model"
 	"github.com/chiahsoon/go_scaffold/web"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -137,8 +138,8 @@ func initDB() error {
 		return err
 	}
 
-	model.DB = db
-	err = model.DB.AutoMigrate(&model.User{})
+	models.DB = db
+	err = models.DB.AutoMigrate(&users.User{})
 
 	return err
 }

@@ -1,6 +1,7 @@
-package model
+package auth
 
 import (
+	"github.com/chiahsoon/go_scaffold/internal/models"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -40,7 +41,7 @@ func GenerateToken(userid string, tokenSecret string, isAccessToken bool, expiry
 	tokenSecretBuf := []byte(tokenSecret)
 	token, err := at.SignedString(tokenSecretBuf)
 	if err != nil {
-		return "", NewInternalServerError(JwtSigningError)
+		return "", models.NewInternalServerError(models.JwtSigningError)
 	}
 
 	return token, nil
@@ -58,7 +59,7 @@ func Refresh(accessTokenString, accessTokenSecret,
 	if expired, err := HasExpired(refreshTokenString, refreshTokenSecret); err != nil {
 		return "", err
 	} else if expired {
-		err = NewUnauthorizedError(ExpiredJwtToken)
+		err = models.NewUnauthorizedError(models.ExpiredJwtToken)
 		return "", err
 	}
 
@@ -80,7 +81,7 @@ func HasExpired(tokenString, tokenSecret string) (bool, error) {
 	expiry := claims[ClaimsExpiryKeyName]
 	expiryTime, err := time.Parse(time.UnixDate, expiry.(string))
 	if err != nil {
-		return false, NewInternalServerError(TimeParseError)
+		return false, models.NewInternalServerError(models.TimeParseError)
 	}
 
 	if expiryTime.Before(time.Now()) {
@@ -100,12 +101,12 @@ func ExtractTokenClaims(tokenString, tokenSecret string) (map[string]interface{}
 
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok || !jwtToken.Valid {
-		return nil, NewUnauthorizedError(InvalidJwtToken)
+		return nil, models.NewUnauthorizedError(models.InvalidJwtToken)
 	}
 
 	_, err = time.Parse(time.UnixDate, claims[ClaimsExpiryKeyName].(string))
 	if err != nil {
-		return nil, NewInternalServerError(FailedToParseJwtToken)
+		return nil, models.NewInternalServerError(models.FailedToParseJwtToken)
 	}
 
 	for claim, value := range claims {
@@ -124,14 +125,14 @@ func tokenStringToJwtToken(tokenString, tokenSecret string) (*jwt.Token, error) 
 
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, NewInternalServerError(JwtSigningError)
+			return nil, models.NewInternalServerError(models.JwtSigningError)
 		}
 		return cookieTokenSecretBuf, nil
 	}
 
 	token, err := jwt.Parse(tokenString, keyFunc)
 	if err != nil {
-		return nil, NewInternalServerError(FailedToParseJwtToken)
+		return nil, models.NewInternalServerError(models.FailedToParseJwtToken)
 	}
 
 	return token, nil

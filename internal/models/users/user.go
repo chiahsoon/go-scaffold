@@ -1,11 +1,9 @@
-package model
+package users
 
-import (
-	"github.com/pkg/errors"
-)
+import "github.com/chiahsoon/go_scaffold/internal/models"
 
 type User struct {
-	Base
+	models.Base
 	Name     string
 	Username string `gorm:"unique"`
 	Email    string `gorm:"unique"`
@@ -32,8 +30,8 @@ func CreateUser(name, email, username, password string) (*User, error) {
 		Password: password,
 	}
 
-	if ret := DB.Create(&user); ret.Error != nil {
-		return nil, errors.Wrapf(ret.Error, DBError)
+	if ret := models.DB.Create(&user); ret.Error != nil {
+		return nil, models.NewInternalServerError(models.DBError)
 	}
 
 	return &user, nil
@@ -46,8 +44,8 @@ func QueryUserByUsername(username string) (User, error) {
 
 func queryUser(query string, args ...interface{}) (User, error) {
 	var user User
-	if ret := DB.Where(query, args...).First(&user); ret.Error != nil {
-		return user, errors.Wrapf(ret.Error, DBError)
+	if ret := models.DB.Where(query, args...).First(&user); ret.Error != nil {
+		return user, models.NewInternalServerError(models.DBError)
 	}
 
 	return user, nil

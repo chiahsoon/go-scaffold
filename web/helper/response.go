@@ -2,9 +2,9 @@ package helper
 
 import (
 	"fmt"
+	"github.com/chiahsoon/go_scaffold/internal/models"
 	"net/http"
 
-	"github.com/chiahsoon/go_scaffold/internal/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,10 +28,10 @@ func SuccessResponse(ctx *gin.Context, data interface{}) {
 
 func ErrorToErrorResponse(ctx *gin.Context, err error) {
 	switch e := err.(type) {
-	case model.UnauthorizedError:
+	case models.UnauthorizedError:
 		UnauthorizedResponse(ctx, e)
 		return
-	case model.BadRequestError:
+	case models.BadRequestError:
 		BadRequestResponse(ctx, e)
 		return
 	default:

@@ -1,9 +1,10 @@
 package helper
 
 import (
+	"github.com/chiahsoon/go_scaffold/internal/models"
+	"github.com/chiahsoon/go_scaffold/internal/models/auth"
 	"net/http"
 
-	"github.com/chiahsoon/go_scaffold/internal/model"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -44,7 +45,8 @@ func IsAuthorized(ctx *gin.Context) {
 		ErrorToErrorResponse(ctx, err)
 		return
 	}
-	expired, err := model.HasExpired(accessTokenString, accessTokenSecret)
+
+	expired, err := auth.HasExpired(accessTokenString, accessTokenSecret)
 	if err != nil {
 		ErrorToErrorResponse(ctx, err)
 		return
@@ -58,7 +60,7 @@ func IsAuthorized(ctx *gin.Context) {
 		}
 
 		refreshTokenSecret := viper.GetString(RefreshTokenConfigSecretKeyName)
-		token, err := model.Refresh(accessTokenString, accessTokenSecret,
+		token, err := auth.Refresh(accessTokenString, accessTokenSecret,
 			refreshTokenString, refreshTokenSecret, AccessTokenExpiryMinutes)
 		if err != nil {
 			ErrorToErrorResponse(ctx, err)
@@ -76,7 +78,7 @@ func GetCurrentUserID(ctx *gin.Context) (string, error) {
 	}
 
 	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
-	return model.GetUserIDFromAccessToken(accessToken, accessTokenSecret)
+	return auth.GetUserIDFromAccessToken(accessToken, accessTokenSecret)
 }
 
 // =====================================================================================================================
@@ -86,7 +88,7 @@ func GetCurrentUserID(ctx *gin.Context) (string, error) {
 func generateAndSetTokenInCookie(ctx *gin.Context, userID string, cookieKeyName string, secretConfigKeyName string,
 	expiryMinutes int) error {
 	secret := viper.GetString(secretConfigKeyName)
-	token, err := model.GenerateToken(userID, secret, cookieKeyName == AccessTokenCookieKeyName, expiryMinutes)
+	token, err := auth.GenerateToken(userID, secret, cookieKeyName == AccessTokenCookieKeyName, expiryMinutes)
 	if err != nil {
 		return err
 	}
@@ -106,9 +108,9 @@ func getTokenInCookie(ctx *gin.Context, cookieKeyName string) (string, error) {
 	cookieToken, err := ctx.Cookie(cookieKeyName)
 	if err != nil || cookieToken == "" {
 		if cookieKeyName == AccessTokenCookieKeyName {
-			return "", model.NewBadRequestError(model.EmptyAccessToken)
+			return "", models.NewBadRequestError(models.EmptyAccessToken)
 		}
-		return "", model.NewBadRequestError(model.EmptyRefreshToken)
+		return "", models.NewBadRequestError(models.EmptyRefreshToken)
 	}
 
 	return cookieToken, nil
