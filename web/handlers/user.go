@@ -33,15 +33,13 @@ func Login(ctx *gin.Context) {
 	}
 
 	// Generate Access Token
-	if err := helper.GenerateAndSetTokenInCookie(ctx, user.ID, helper.AccessTokenCookieKeyName,
-		helper.AccessTokenConfigSecretKeyName, helper.AccessTokenExpiryMinutes); err != nil {
+	if err := helper.GenerateAndSetAccessTokenInCookie(ctx, user.ID); err != nil {
 		helper.InternalServerErrorResponse(ctx, err)
 		return
 	}
 
 	// Generate Refresh Token
-	if err := helper.GenerateAndSetTokenInCookie(ctx, user.ID, helper.RefreshTokenCookieKeyName,
-		helper.RefreshTokenConfigSecretKeyName, helper.RefreshTokenExpiryMinutes); err != nil {
+	if err := helper.GenerateAndSetRefreshTokenInCookie(ctx, user.ID); err != nil {
 		helper.InternalServerErrorResponse(ctx, err)
 		return
 	}
@@ -69,15 +67,13 @@ func Signup(ctx *gin.Context) {
 	}
 
 	// Generate Access Token
-	if err := helper.GenerateAndSetTokenInCookie(ctx, user.ID, helper.AccessTokenCookieKeyName,
-		helper.AccessTokenConfigSecretKeyName, helper.AccessTokenExpiryMinutes); err != nil {
+	if err := helper.GenerateAndSetAccessTokenInCookie(ctx, user.ID); err != nil {
 		helper.InternalServerErrorResponse(ctx, err)
 		return
 	}
 
 	// Generate Refresh Token
-	if err := helper.GenerateAndSetTokenInCookie(ctx, user.ID, helper.RefreshTokenCookieKeyName,
-		helper.RefreshTokenConfigSecretKeyName, helper.RefreshTokenExpiryMinutes); err != nil {
+	if err := helper.GenerateAndSetRefreshTokenInCookie(ctx, user.ID); err != nil {
 		helper.InternalServerErrorResponse(ctx, err)
 		return
 	}

@@ -19,4 +19,6 @@ linters:
     - godot
     - exhaustivestruct
     - gosec
+    - godox
+    - errorlint
   enable-all: true

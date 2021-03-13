@@ -17,7 +17,35 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitLogger() error {
+func main() {
+	// Logging
+	err := initLogger()
+	if err != nil {
+		log.Fatal("failed to initialise logger", err)
+	}
+
+	// Configuration
+	env := "dev"
+	if envVar := os.Getenv("ENV"); envVar != "" {
+		env = strings.ToLower(envVar)
+	}
+
+	err = initConfigs(env)
+	if err != nil {
+		log.Fatal("failed to initialise configurations file: \n", err)
+	}
+
+	// Database
+	err = initDB()
+	if err != nil {
+		log.Fatal("failed to initialise database: \n", err)
+	}
+
+	// fmt.Println("FLAG: ", os.Args[1:])
+	web.Run()
+}
+
+func initLogger() error {
 	logDir := "log"
 	infoPath := fmt.Sprintf("%s/info.log", logDir)
 	errorPath := fmt.Sprintf("%s/info.log", logDir)
@@ -65,7 +93,7 @@ func InitLogger() error {
 	return nil
 }
 
-func InitConfigs(env string) error {
+func initConfigs(env string) error {
 	viper.SetConfigName(env)
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./configs/")
@@ -82,7 +110,7 @@ func InitConfigs(env string) error {
 	return err
 }
 
-func InitDB() error {
+func initDB() error {
 	var dbUser, dbPassword, dbProtocol, dbAddress, dbName string
 
 	databases := viper.Get("databases")
@@ -113,32 +141,4 @@ func InitDB() error {
 	err = model.DB.AutoMigrate(&model.User{})
 
 	return err
-}
-
-func main() {
-	// Logging
-	err := InitLogger()
-	if err != nil {
-		log.Fatal("failed to initialise logger", err)
-	}
-
-	// Configuration
-	env := "dev"
-	if envVar := os.Getenv("ENV"); envVar != "" {
-		env = strings.ToLower(envVar)
-	}
-
-	err = InitConfigs(env)
-	if err != nil {
-		log.Fatal("failed to initialise configurations file: \n", err)
-	}
-
-	// Database
-	err = InitDB()
-	if err != nil {
-		log.Fatal("failed to initialise database: \n", err)
-	}
-
-	// fmt.Println("FLAG: ", os.Args[1:])
-	web.Run()
 }

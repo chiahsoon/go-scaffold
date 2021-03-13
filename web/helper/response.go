@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/chiahsoon/go_scaffold/internal/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,6 +24,19 @@ func SuccessResponse(ctx *gin.Context, data interface{}) {
 		StatusCode: http.StatusOK,
 		Data:       data,
 	})
+}
+
+func ErrorToErrorResponse(ctx *gin.Context, err error) {
+	switch e := err.(type) {
+	case model.UnauthorizedError:
+		UnauthorizedResponse(ctx, e)
+		return
+	case model.BadRequestError:
+		BadRequestResponse(ctx, e)
+		return
+	default:
+		InternalServerErrorResponse(ctx, e)
+	}
 }
 
 func BadRequestResponse(ctx *gin.Context, err error) {
