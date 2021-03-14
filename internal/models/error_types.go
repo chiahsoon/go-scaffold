@@ -40,8 +40,8 @@ func (e BadRequestError) Error() string {
 	return e.message
 }
 
-func NewBadRequestError(message string) InternalServerError {
-	return InternalServerError{
+func NewBadRequestError(message string) BadRequestError {
+	return BadRequestError {
 		message: message,
 	}
 }

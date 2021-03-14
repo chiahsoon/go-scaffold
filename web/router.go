@@ -44,6 +44,7 @@ func NewRouter() *Router {
 
 func (r *Router) Run() {
 	port := ":" + viper.GetString("port")
+	helper.Init()
 
 	if err := r.Engine.Run(port); err != nil {
 		log.Fatal("failed to start server: \n", err)

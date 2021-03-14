@@ -22,6 +22,16 @@ const (
 	CookieSecureConfigKeyName = "cookie_secure"
 )
 
+var (
+	accessTokenSecret = ""
+	refreshTokenSecret = ""
+)
+
+func Init() {
+	accessTokenSecret = viper.GetString(AccessTokenConfigSecretKeyName)
+	refreshTokenSecret = viper.GetString(RefreshTokenConfigSecretKeyName)
+}
+
 func GenerateAndSetAccessTokenInCookie(ctx *gin.Context, userID string) error {
 	return generateAndSetTokenInCookie(ctx, userID, AccessTokenCookieKeyName, AccessTokenConfigSecretKeyName,
 		AccessTokenExpiryMinutes)
@@ -39,7 +49,6 @@ func RemoveTokenInCookie(ctx *gin.Context, cookieKeyName string) {
 }
 
 func IsAuthorized(ctx *gin.Context) {
-	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
 	accessTokenString, err := getTokenInCookie(ctx, AccessTokenCookieKeyName)
 	if err != nil {
 		ErrorToErrorResponse(ctx, err)
@@ -62,7 +71,6 @@ func IsAuthorized(ctx *gin.Context) {
 			return
 		}
 
-		refreshTokenSecret := viper.GetString(RefreshTokenConfigSecretKeyName)
 		token, err := auth.Refresh(accessTokenString, accessTokenSecret,
 			refreshTokenString, refreshTokenSecret, AccessTokenExpiryMinutes)
 		if err != nil {
@@ -81,7 +89,6 @@ func GetCurrentUserID(ctx *gin.Context) (string, error) {
 		return "", err
 	}
 
-	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
 	return auth.GetUserIDFromAccessToken(accessToken, accessTokenSecret)
 }
 
@@ -112,7 +119,7 @@ func getTokenInCookie(ctx *gin.Context, cookieKeyName string) (string, error) {
 	cookieToken, err := ctx.Cookie(cookieKeyName)
 	if err != nil || cookieToken == "" {
 		if cookieKeyName == AccessTokenCookieKeyName {
-			return "", models.NewBadRequestError(models.EmptyAccessToken)
+			return "", models.NewUnauthorizedError(models.EmptyAccessToken)
 		}
 		return "", models.NewBadRequestError(models.EmptyRefreshToken)
 	}
