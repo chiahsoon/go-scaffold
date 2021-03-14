@@ -4,11 +4,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/chiahsoon/go_scaffold/internal/models"
-	"github.com/chiahsoon/go_scaffold/internal/models/users"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/chiahsoon/go_scaffold/internal/models"
+	"github.com/chiahsoon/go_scaffold/internal/models/users"
 
 	"github.com/chiahsoon/go_scaffold/web"
 	"github.com/spf13/viper"

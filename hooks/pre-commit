@@ -11,4 +11,4 @@ if [ -n "$gofiles" ]; then
     git add "$gofiles"
 fi
 
-golangci-lint run -exclude=G101
+golangci-lint run

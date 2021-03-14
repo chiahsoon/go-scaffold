@@ -2,9 +2,9 @@ package helper
 
 import (
 	"fmt"
-	"github.com/chiahsoon/go_scaffold/internal/models"
 	"net/http"
 
+	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/gin-gonic/gin"
 )
 

@@ -34,7 +34,7 @@ type SignupRequest struct {
 }
 
 func CreateUser(name, email, username, password string) (*User, error) {
-	user := User {
+	user := User{
 		Name:     name,
 		Username: username,
 		Email:    email,

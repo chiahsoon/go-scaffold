@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"github.com/chiahsoon/go_scaffold/internal/models"
 	"time"
 
+	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/dgrijalva/jwt-go"
 )
 

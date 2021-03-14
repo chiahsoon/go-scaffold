@@ -8,17 +8,3 @@ linters-settings:
   gocritic:
     disabled-checks:
       - singleCaseSwitch
-
-linters:
-  disable:
-    - gochecknoglobals
-    - funlen
-    - wsl
-    - nlreturn
-    - wrapcheck
-    - godot
-    - exhaustivestruct
-    - gosec
-    - godox
-    - errorlint
-  enable-all: true

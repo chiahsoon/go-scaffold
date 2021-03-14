@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/chiahsoon/go_scaffold/internal/models/users"
 	"github.com/chiahsoon/go_scaffold/web/helper"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
 )
 
 func Home(ctx *gin.Context) {

@@ -1,10 +1,10 @@
 package helper
 
 import (
-	"github.com/chiahsoon/go_scaffold/internal/models"
-	"github.com/chiahsoon/go_scaffold/internal/models/auth"
 	"net/http"
 
+	"github.com/chiahsoon/go_scaffold/internal/models"
+	"github.com/chiahsoon/go_scaffold/internal/models/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
