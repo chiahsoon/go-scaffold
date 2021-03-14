@@ -26,15 +26,12 @@ func GetUserIDFromAccessToken(accessToken, accessTokenSecret string) (string, er
 	return claims[ClaimsUserIDKeyName].(string), nil
 }
 
-// Generates access or refresh token
-func GenerateToken(userid string, tokenSecret string, isAccessToken bool, expiryMinutes int) (string, error) {
+// Generates access token
+func GenerateToken(userid string, tokenSecret string, expiryMinutes int) (string, error) {
 	// TODO: Add parameter for claims
 
 	claims := jwt.MapClaims{}
-	if isAccessToken {
-		claims[ClaimsUserIDKeyName] = userid
-	}
-
+	claims[ClaimsUserIDKeyName] = userid
 	claims[ClaimsExpiryKeyName] = time.Now().Add(time.Minute * time.Duration(expiryMinutes)).Format(time.UnixDate)
 	at := jwt.NewWithClaims(signingMethod, claims)
 
@@ -47,31 +44,7 @@ func GenerateToken(userid string, tokenSecret string, isAccessToken bool, expiry
 	return token, nil
 }
 
-// Returns new access token in exchange for expired access token and valid refresh token
-func Refresh(accessTokenString, accessTokenSecret,
-	refreshTokenString, refreshTokenSecret string, accessTokenExpiryMinutes int) (string, error) {
-	accessTokenClaims, err := ExtractTokenClaims(accessTokenString, accessTokenSecret)
-	if err != nil {
-		return "", err
-	}
-
-	userID := accessTokenClaims[ClaimsUserIDKeyName].(string)
-	if expired, err := HasExpired(refreshTokenString, refreshTokenSecret); err != nil {
-		return "", err
-	} else if expired {
-		err = models.NewUnauthorizedError(models.ExpiredJwtToken)
-		return "", err
-	}
-
-	token, err := GenerateToken(userID, accessTokenSecret, true, accessTokenExpiryMinutes)
-	if err != nil {
-		return "", nil
-	}
-
-	return token, nil
-}
-
-// Check if access or refresh token has expired
+// Check if access token has expired
 func HasExpired(tokenString, tokenSecret string) (bool, error) {
 	claims, err := ExtractTokenClaims(tokenString, tokenSecret)
 	if err != nil {
@@ -91,7 +64,7 @@ func HasExpired(tokenString, tokenSecret string) (bool, error) {
 	return false, nil
 }
 
-// Get claims in access or refresh token
+// Get claims in access token
 func ExtractTokenClaims(tokenString, tokenSecret string) (map[string]interface{}, error) {
 	results := make(map[string]interface{})
 	jwtToken, err := tokenStringToJwtToken(tokenString, tokenSecret)

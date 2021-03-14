@@ -38,12 +38,6 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	// Generate Refresh Token
-	if err := helper.GenerateAndSetRefreshTokenInCookie(ctx, user.ID); err != nil {
-		helper.InternalServerErrorResponse(ctx, err)
-		return
-	}
-
 	helper.SuccessResponse(ctx, user)
 }
 
@@ -72,17 +66,10 @@ func Signup(ctx *gin.Context) {
 		return
 	}
 
-	// Generate Refresh Token
-	if err := helper.GenerateAndSetRefreshTokenInCookie(ctx, user.ID); err != nil {
-		helper.ErrorToErrorResponse(ctx, err)
-		return
-	}
-
 	helper.SuccessResponse(ctx, user)
 }
 
 func Logout(ctx *gin.Context) {
 	helper.RemoveTokenInCookie(ctx, helper.AccessTokenCookieKeyName)
-	helper.RemoveTokenInCookie(ctx, helper.RefreshTokenCookieKeyName)
 	helper.SuccessResponse(ctx, "User logged out.")
 }
