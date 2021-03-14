@@ -10,7 +10,7 @@ func (e UnauthorizedError) Error() string {
 
 func NewUnauthorizedError(message string) UnauthorizedError {
 	return UnauthorizedError{
-		message: InvalidJwtToken,
+		message: message,
 	}
 }
 

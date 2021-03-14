@@ -29,11 +29,13 @@ func NewRouter() *Router {
 
 	// API Endpoints
 	// router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	v1API := router.Group("/apis/v1")
-	v1API.GET("home", helper.IsAuthorized, handlers.Home)
-	v1API.POST("login", handlers.Login)
-	v1API.POST("signup", handlers.Signup)
+	v1APIWithoutAuth := router.Group("/apis/v1")
+	v1APIWithoutAuth.POST("login", handlers.Login)
+
+	v1API := v1APIWithoutAuth.Use(helper.IsAuthorized)
+	v1API.GET("home", handlers.Home)
 	v1API.GET("logout", helper.IsAuthorized, handlers.Logout)
+	v1API.POST("signup", handlers.Signup)
 
 	return &Router{
 		router,

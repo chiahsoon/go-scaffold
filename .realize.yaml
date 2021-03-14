@@ -10,7 +10,7 @@ schema:
     commands:
       install:
         status: true
-        method: go build -o bin/scaffold-api cmd/api/run.go
+        method: go build -o bin/scaffold-api cmd/run.go
       run:
         status: true
         method: bin/scaffold-api

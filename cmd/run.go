@@ -49,7 +49,7 @@ func main() {
 func initLogger() error {
 	logDir := "log"
 	infoPath := fmt.Sprintf("%s/info.log", logDir)
-	errorPath := fmt.Sprintf("%s/info.log", logDir)
+	errorPath := fmt.Sprintf("%s/error.log", logDir)
 
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
 		if err = os.Mkdir(logDir, os.ModePerm); err != nil {

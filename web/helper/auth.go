@@ -43,12 +43,14 @@ func IsAuthorized(ctx *gin.Context) {
 	accessTokenString, err := getTokenInCookie(ctx, AccessTokenCookieKeyName)
 	if err != nil {
 		ErrorToErrorResponse(ctx, err)
+		ctx.Abort()
 		return
 	}
 
 	expired, err := auth.HasExpired(accessTokenString, accessTokenSecret)
 	if err != nil {
 		ErrorToErrorResponse(ctx, err)
+		ctx.Abort()
 		return
 	}
 
@@ -56,6 +58,7 @@ func IsAuthorized(ctx *gin.Context) {
 		refreshTokenString, err := getTokenInCookie(ctx, RefreshTokenCookieKeyName)
 		if err != nil {
 			ErrorToErrorResponse(ctx, err)
+			ctx.Abort()
 			return
 		}
 
@@ -64,6 +67,7 @@ func IsAuthorized(ctx *gin.Context) {
 			refreshTokenString, refreshTokenSecret, AccessTokenExpiryMinutes)
 		if err != nil {
 			ErrorToErrorResponse(ctx, err)
+			ctx.Abort()
 			return
 		}
 

@@ -1,13 +1,24 @@
 package users
 
-import "github.com/chiahsoon/go_scaffold/internal/models"
+import (
+	"github.com/chiahsoon/go_scaffold/internal/models"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
 
 type User struct {
 	models.Base
 	Name     string
 	Username string `gorm:"unique"`
 	Email    string `gorm:"unique"`
-	Password string
+	Password string `json:"-"`
+}
+
+func (u User) MarshalLogObject(enc zapcore.ObjectEncoder) error {
+	enc.AddString("name", u.Name)
+	enc.AddString("username", u.Username)
+	enc.AddString("email", u.Email)
+	return nil
 }
 
 type LoginRequest struct {
@@ -23,7 +34,7 @@ type SignupRequest struct {
 }
 
 func CreateUser(name, email, username, password string) (*User, error) {
-	user := User{
+	user := User {
 		Name:     name,
 		Username: username,
 		Email:    email,
@@ -31,6 +42,10 @@ func CreateUser(name, email, username, password string) (*User, error) {
 	}
 
 	if ret := models.DB.Create(&user); ret.Error != nil {
+		zap.L().Error(
+			models.DBError,
+			zap.Object("user", &user),
+		)
 		return nil, models.NewInternalServerError(models.DBError)
 	}
 
@@ -45,6 +60,10 @@ func QueryUserByUsername(username string) (User, error) {
 func queryUser(query string, args ...interface{}) (User, error) {
 	var user User
 	if ret := models.DB.Where(query, args...).First(&user); ret.Error != nil {
+		zap.L().Error(
+			models.DBError,
+			zap.String("query", query),
+		)
 		return user, models.NewInternalServerError(models.DBError)
 	}
 
