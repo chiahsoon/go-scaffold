@@ -9,10 +9,10 @@ var DB *gorm.DB
 
 // Base contains common columns for all tables.
 type Base struct {
-	ID        string `gorm:"type:string;primary_key;"`
-	CreatedAt uint
-	UpdatedAt uint
-	DeletedAt *uint
+	ID        string `gorm:"type:string;primary_key;" json:"id"`
+	CreatedAt uint   `json:"created_at"`
+	UpdatedAt uint   `json:"updated_at"`
+	DeletedAt *uint  `json:"deleted_at"`
 }
 
 func (base *Base) BeforeCreate(*gorm.DB) (err error) {

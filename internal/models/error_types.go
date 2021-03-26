@@ -41,7 +41,7 @@ func (e BadRequestError) Error() string {
 }
 
 func NewBadRequestError(message string) BadRequestError {
-	return BadRequestError {
+	return BadRequestError{
 		message: message,
 	}
 }

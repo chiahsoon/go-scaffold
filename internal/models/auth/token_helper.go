@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/chiahsoon/go_scaffold/internal"
 	"time"
 
 	"github.com/chiahsoon/go_scaffold/internal/models"
@@ -16,18 +17,8 @@ const (
 
 var signingMethod = jwt.SigningMethodHS512
 
-// Returns user id from access token
-func GetUserIDFromAccessToken(accessToken, accessTokenSecret string) (string, error) {
-	claims, err := ExtractTokenClaims(accessToken, accessTokenSecret)
-	if err != nil {
-		return "", err
-	}
-
-	return claims[ClaimsUserIDKeyName].(string), nil
-}
-
 // Generates access token
-func GenerateToken(userid string, tokenSecret string, expiryMinutes int) (string, error) {
+func generateToken(userid string, tokenSecret string, expiryMinutes int) (string, error) {
 	// TODO: Add parameter for claims
 
 	claims := jwt.MapClaims{}
@@ -38,15 +29,15 @@ func GenerateToken(userid string, tokenSecret string, expiryMinutes int) (string
 	tokenSecretBuf := []byte(tokenSecret)
 	token, err := at.SignedString(tokenSecretBuf)
 	if err != nil {
-		return "", models.NewInternalServerError(models.JwtSigningError)
+		return "", models.NewInternalServerError(internal.JwtSigningError)
 	}
 
 	return token, nil
 }
 
 // Check if access token has expired
-func HasExpired(tokenString, tokenSecret string) (bool, error) {
-	claims, err := ExtractTokenClaims(tokenString, tokenSecret)
+func hasExpired(tokenString, tokenSecret string) (bool, error) {
+	claims, err := extractTokenClaims(tokenString, tokenSecret)
 	if err != nil {
 		return false, err
 	}
@@ -54,7 +45,7 @@ func HasExpired(tokenString, tokenSecret string) (bool, error) {
 	expiry := claims[ClaimsExpiryKeyName]
 	expiryTime, err := time.Parse(time.UnixDate, expiry.(string))
 	if err != nil {
-		return false, models.NewInternalServerError(models.TimeParseError)
+		return false, models.NewInternalServerError(internal.TimeParseError)
 	}
 
 	if expiryTime.Before(time.Now()) {
@@ -65,7 +56,7 @@ func HasExpired(tokenString, tokenSecret string) (bool, error) {
 }
 
 // Get claims in access token
-func ExtractTokenClaims(tokenString, tokenSecret string) (map[string]interface{}, error) {
+func extractTokenClaims(tokenString, tokenSecret string) (map[string]interface{}, error) {
 	results := make(map[string]interface{})
 	jwtToken, err := tokenStringToJwtToken(tokenString, tokenSecret)
 	if err != nil {
@@ -74,12 +65,12 @@ func ExtractTokenClaims(tokenString, tokenSecret string) (map[string]interface{}
 
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok || !jwtToken.Valid {
-		return nil, models.NewUnauthorizedError(models.InvalidJwtToken)
+		return nil, models.NewUnauthorizedError(internal.InvalidJwtToken)
 	}
 
 	_, err = time.Parse(time.UnixDate, claims[ClaimsExpiryKeyName].(string))
 	if err != nil {
-		return nil, models.NewInternalServerError(models.FailedToParseJwtToken)
+		return nil, models.NewInternalServerError(internal.FailedToParseJwtToken)
 	}
 
 	for claim, value := range claims {
@@ -98,14 +89,14 @@ func tokenStringToJwtToken(tokenString, tokenSecret string) (*jwt.Token, error) 
 
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, models.NewInternalServerError(models.JwtSigningError)
+			return nil, models.NewInternalServerError(internal.JwtSigningError)
 		}
 		return cookieTokenSecretBuf, nil
 	}
 
 	token, err := jwt.Parse(tokenString, keyFunc)
 	if err != nil {
-		return nil, models.NewInternalServerError(models.FailedToParseJwtToken)
+		return nil, models.NewInternalServerError(internal.FailedToParseJwtToken)
 	}
 
 	return token, nil

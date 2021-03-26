@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/chiahsoon/go_scaffold/internal/models"
-	"github.com/chiahsoon/go_scaffold/internal/models/users"
-
 	"github.com/chiahsoon/go_scaffold/web"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -140,7 +138,7 @@ func initDB() error {
 	}
 
 	models.DB = db
-	err = models.DB.AutoMigrate(&users.User{})
+	err = models.DB.AutoMigrate(&models.User{})
 
 	return err
 }

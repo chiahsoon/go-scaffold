@@ -1,67 +1,67 @@
 package handlers
 
 import (
+	"github.com/chiahsoon/go_scaffold/internal/models/auth"
 	"net/http"
 
 	"github.com/chiahsoon/go_scaffold/internal/models"
-	"github.com/chiahsoon/go_scaffold/internal/models/users"
 	"github.com/chiahsoon/go_scaffold/web/helper"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
+
+const (
+	AccessTokenCookieKeyName = "access_token"
+)
+
+var handler = auth.TokenHandler{}
 
 func Home(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, "<h1>Welcome!</h1>")
 }
 
 func Login(ctx *gin.Context) {
-	var req users.LoginRequest
+	var req models.EmailLoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		helper.BadRequestResponse(ctx, err)
 		return
 	}
 
-	user, err := users.QueryUserByUsername(req.Username)
+	user, accessToken, err := handler.Login(req.Email, req.Password)
 	if err != nil {
-		helper.UnauthorizedResponse(ctx, err)
+		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
 
-	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		helper.UnauthorizedResponse(ctx, models.NewUnauthorizedError(models.InvalidPassword))
-		return
-	}
-
-	// Generate Access Token
-	if err := helper.GenerateAndSetAccessTokenInCookie(ctx, user.ID); err != nil {
-		helper.InternalServerErrorResponse(ctx, err)
-		return
-	}
-
+	helper.SetCookieSecurely(ctx, AccessTokenCookieKeyName, accessToken)
 	helper.SuccessResponse(ctx, user)
 }
 
 func Signup(ctx *gin.Context) {
-	var req users.SignupRequest
+	var req models.SignupRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		helper.BadRequestResponse(ctx, err)
 		return
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.MinCost)
-	if err != nil {
-		helper.InternalServerErrorResponse(ctx, models.NewInternalServerError(models.BcryptHashError))
-		return
-	}
-
-	user, err := users.CreateUser(req.Name, req.Email, req.Username, string(hash))
+	user, accessToken, err := handler.Register(req.Name, req.Username, req.Email, req.Password)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
 
-	// Generate Access Token
-	if err := helper.GenerateAndSetAccessTokenInCookie(ctx, user.ID); err != nil {
+	helper.SetCookieSecurely(ctx, AccessTokenCookieKeyName, accessToken)
+	helper.SuccessResponse(ctx, user)
+}
+
+func Logout(ctx *gin.Context) {
+	helper.RemoveCookieSafely(ctx, AccessTokenCookieKeyName)
+	helper.SuccessResponse(ctx, "User logged out.")
+}
+
+func CurrentUser(ctx *gin.Context) {
+	accessTokenString, _ := helper.GetValidCookie(ctx, AccessTokenCookieKeyName) // Assume no error
+	user, err := handler.GetCurrentUser(accessTokenString)
+	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
@@ -69,7 +69,17 @@ func Signup(ctx *gin.Context) {
 	helper.SuccessResponse(ctx, user)
 }
 
-func Logout(ctx *gin.Context) {
-	helper.RemoveTokenInCookie(ctx, helper.AccessTokenCookieKeyName)
-	helper.SuccessResponse(ctx, "User logged out.")
+func IsAuthenticated(ctx *gin.Context) {
+	accessTokenString, err := helper.GetValidCookie(ctx, AccessTokenCookieKeyName)
+	if err != nil {
+		helper.ErrorToErrorResponse(ctx, err)
+		ctx.Abort()
+		return
+	}
+
+	if err := handler.ValidateToken(accessTokenString); err != nil {
+		helper.ErrorToErrorResponse(ctx, err)
+		ctx.Abort()
+		return
+	}
 }
