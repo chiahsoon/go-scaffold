@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/chiahsoon/go_scaffold/internal/models"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -13,33 +14,31 @@ const (
 
 type AuthService struct{}
 
-func (h AuthService) ExchangePasswordForAccessToken(password string, user *models.User) (string, error) {
+func (h AuthService) ExchangePasswordForTokenPair(password string, user *models.User) (string, string, error) {
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return "", models.NewUnauthorizedError(InvalidPassword)
+		return "", "", models.NewUnauthorizedError(InvalidPassword)
 	}
 
-	tokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
-	token, err := GenerateToken(user.ID, tokenSecret, AccessTokenExpiryMinutes)
+	accessToken, refreshToken, err := generateTokenPair(user)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return token, nil
+	return accessToken, refreshToken, nil
 }
 
 func (h AuthService) Logout() error {
 	return nil
 }
 
-func (h AuthService) GetAccessTokenForNewUser(user *models.User) (string, error) {
-	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
-	token, err := GenerateToken(user.ID, accessTokenSecret, AccessTokenExpiryMinutes)
+func (h AuthService) GetTokenPairForNewUser(user *models.User) (string, string, error) {
+	accessToken, refreshToken, err := generateTokenPair(user)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return token, nil
+	return accessToken, refreshToken, nil
 }
 
 func (h AuthService) ValidateToken(accessTokenString string) error {
@@ -65,4 +64,35 @@ func (h AuthService) GetUserIDFromAccessToken(accessToken string) (string, error
 	}
 
 	return claims.Subject, nil
+}
+
+
+func (h AuthService) Refresh(accessTokenString, refreshTokenString string) (string, error) {
+	refreshTokenSecret := viper.GetString(RefreshTokenConfigSecretKeyName)
+	userID, err := h.GetUserIDFromAccessToken(accessTokenString)
+	if err != nil {
+		return "", err
+	}
+
+	if !isTokenSignatureValid(refreshTokenString, refreshTokenSecret) {
+		return "", jwt.NewValidationError(InvalidJwtToken, jwt.ValidationErrorSignatureInvalid)
+	}
+
+	if !IsTokenExpired(refreshTokenString, refreshTokenSecret) {
+		return "", jwt.NewValidationError(InvalidJwtToken, jwt.ValidationErrorExpired)
+	}
+
+	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
+	return GenerateToken(userID, accessTokenSecret, AccessTokenExpiryMinutes)
+}
+
+
+func (h AuthService) AccessTokenHasExpired(tokenString string) bool {
+	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
+	return IsTokenExpired(tokenString, accessTokenSecret)
+}
+
+func (h AuthService) RefreshTokenHasExpired(tokenString string) bool {
+	refreshTokenSecret := viper.GetString(RefreshTokenConfigSecretKeyName)
+	return IsTokenExpired(tokenString, refreshTokenSecret)
 }

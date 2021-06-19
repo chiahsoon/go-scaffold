@@ -4,10 +4,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/chiahsoon/go_scaffold/internal"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/chiahsoon/go_scaffold/internal"
 
 	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/chiahsoon/go_scaffold/web"
@@ -141,7 +142,10 @@ func initDB() error {
 	}
 
 	internal.DB = db
-	err = internal.DB.AutoMigrate(&models.User{})
+	err = internal.DB.AutoMigrate(
+		&models.User{},
+		&models.UserRefreshToken{},
+	)
 
 	return err
 }

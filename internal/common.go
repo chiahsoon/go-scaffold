@@ -9,8 +9,10 @@ import (
 
 var AuthService auth.AuthService
 var UserService dals.UserDAL
+var UserRefreshTokenService dals.UserRefreshTokenDAL
 
 func Init() {
 	AuthService = auth.AuthService{}
 	UserService = dals.UserDAL{}
+	UserRefreshTokenService = dals.UserRefreshTokenDAL{}
 }

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"time"
 
 	"github.com/chiahsoon/go_scaffold/internal/models"
@@ -9,7 +10,14 @@ import (
 )
 
 // TODO: Add logging
+
 var signingMethod = jwt.SigningMethodHS512
+
+const (
+	RefreshTokenConfigSecretKeyName = "refresh_token_secret"
+	RefreshTokenExpiryMinutes       = 525600 // 1 Year
+)
+
 
 func GenerateToken(userID string, tokenSecret string, expiryMinutes int) (string, error) {
 	// TODO: Add parameter for claims
@@ -29,6 +37,25 @@ func GenerateToken(userID string, tokenSecret string, expiryMinutes int) (string
 
 	return token, nil
 }
+
+func generateTokenPair(user *models.User) (string, string, error) {
+	// Generate Access Token
+	atSecret := viper.GetString(AccessTokenConfigSecretKeyName)
+	accessToken, err := GenerateToken(user.ID, atSecret, AccessTokenExpiryMinutes)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Generate Refresh Token
+	rtSecret := viper.GetString(RefreshTokenConfigSecretKeyName)
+	refreshToken, err := GenerateToken(user.ID, rtSecret, RefreshTokenExpiryMinutes)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
+}
+
 
 func tokenStringToJwtToken(tokenString, tokenSecret string) (*jwt.Token, error) {
 	cookieTokenSecretBuf := []byte(tokenSecret)
@@ -76,6 +103,23 @@ func isTokenSignatureValid(tokenString, tokenSecret string) bool {
 	return false
 }
 
+func IsTokenExpired(tokenString, tokenSecret string) bool {
+	token, err := tokenStringToJwtToken(tokenString, tokenSecret)
+	if token == nil {
+		return false
+	}
+
+	if token.Valid {
+		return false
+	}
+
+	if ve, ok := err.(*jwt.ValidationError); ok && ve.Errors&jwt.ValidationErrorExpired != 0 {
+		return true
+	}
+
+	return false
+}
+
 func isTokenMalformed(tokenString, tokenSecret string) bool {
 	token, err := tokenStringToJwtToken(tokenString, tokenSecret)
 	if token == nil {
@@ -87,23 +131,6 @@ func isTokenMalformed(tokenString, tokenSecret string) bool {
 	}
 
 	if ve, ok := err.(*jwt.ValidationError); ok && ve.Errors&jwt.ValidationErrorMalformed != 0 {
-		return true
-	}
-
-	return false
-}
-
-func isTokenExpired(tokenString, tokenSecret string) bool {
-	token, err := tokenStringToJwtToken(tokenString, tokenSecret)
-	if token == nil {
-		return false
-	}
-
-	if token.Valid {
-		return false
-	}
-
-	if ve, ok := err.(*jwt.ValidationError); ok && ve.Errors&jwt.ValidationErrorExpired != 0 {
 		return true
 	}
 

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/pkg/errors"
 	"net/http"
 
 	"github.com/chiahsoon/go_scaffold/internal"
@@ -13,6 +14,7 @@ import (
 
 const (
 	AccessTokenCookieKeyName = "access_token"
+	RefreshTokenCookieKeyName = "refresh_token"
 )
 
 func Home(ctx *gin.Context) {
@@ -32,13 +34,21 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, err := internal.AuthService.ExchangePasswordForAccessToken(req.Password, user)
+	accessToken, refreshToken, err := internal.AuthService.ExchangePasswordForTokenPair(req.Password, user)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
 
+	uwt := &models.UserRefreshToken{UserID: user.ID, RefreshToken: refreshToken}
+	if err := internal.UserRefreshTokenService.Upsert(internal.DB, uwt); err != nil {
+		helper.ErrorToErrorResponse(ctx, err)
+		return
+	}
+
+
 	helper.SetCookieSecurely(ctx, AccessTokenCookieKeyName, accessToken)
+	helper.SetCookieSecurely(ctx, RefreshTokenCookieKeyName, refreshToken)
 	helper.SuccessResponse(ctx, user)
 }
 
@@ -67,18 +77,30 @@ func Signup(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, err := internal.AuthService.GetAccessTokenForNewUser(&user)
+	accessToken, refreshToken, err := internal.AuthService.GetTokenPairForNewUser(&user)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
 
+	uwt := &models.UserRefreshToken{UserID: user.ID, RefreshToken: refreshToken}
+	if err := internal.UserRefreshTokenService.Upsert(internal.DB, uwt); err != nil {
+		helper.ErrorToErrorResponse(ctx, err)
+		return
+	}
+
 	helper.SetCookieSecurely(ctx, AccessTokenCookieKeyName, accessToken)
+	helper.SetCookieSecurely(ctx, RefreshTokenCookieKeyName, refreshToken)
 	helper.SuccessResponse(ctx, user)
 }
 
 func Logout(ctx *gin.Context) {
+	if err := internal.AuthService.Logout(); err != nil {
+		helper.ErrorToErrorResponse(ctx, err)
+		return
+	}
 	helper.RemoveCookieSafely(ctx, AccessTokenCookieKeyName)
+	helper.RemoveCookieSafely(ctx, RefreshTokenCookieKeyName)
 	helper.SuccessResponse(ctx, "User logged out.")
 }
 
@@ -102,9 +124,30 @@ func CurrentUser(ctx *gin.Context) {
 func IsAuthenticated(ctx *gin.Context) {
 	accessTokenString := helper.GetValidCookie(ctx, AccessTokenCookieKeyName)
 
-	if err := internal.AuthService.ValidateToken(accessTokenString); err != nil {
-		helper.ErrorToErrorResponse(ctx, err)
-		ctx.Abort()
+	if err := internal.AuthService.ValidateToken(accessTokenString); err == nil {
 		return
 	}
+
+	ATExpired := internal.AuthService.AccessTokenHasExpired(accessTokenString)
+	if !ATExpired {
+		helper.InternalServerErrorResponse(ctx, errors.New("failed to parse jwt"))
+		return
+	}
+
+	// Refresh access token
+	refreshTokenString := helper.GetValidCookie(ctx, RefreshTokenCookieKeyName)
+	RTExpired := internal.AuthService.RefreshTokenHasExpired(refreshTokenString)
+	if RTExpired {
+		helper.ErrorToErrorResponse(ctx, models.NewBadRequestError("refresh token has expired"))
+		return
+	}
+
+	newAT, err := internal.AuthService.Refresh(accessTokenString, refreshTokenString)
+	if err != nil {
+		helper.ErrorToErrorResponse(ctx, err)
+		return
+	}
+
+	helper.SetCookieSecurely(ctx, AccessTokenCookieKeyName, newAT)
+	return
 }

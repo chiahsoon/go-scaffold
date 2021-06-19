@@ -45,6 +45,7 @@ func BadRequestResponse(ctx *gin.Context, err error) {
 		Message:    err.Error(),
 		Traceback:  fmt.Sprintf("%+v", err),
 	})
+	ctx.Abort()
 }
 
 func UnauthorizedResponse(ctx *gin.Context, err error) {
@@ -53,6 +54,7 @@ func UnauthorizedResponse(ctx *gin.Context, err error) {
 		Message:    err.Error(),
 		Traceback:  fmt.Sprintf("%+v", err),
 	})
+	ctx.Abort()
 }
 
 func InternalServerErrorResponse(ctx *gin.Context, err error) {
@@ -61,4 +63,5 @@ func InternalServerErrorResponse(ctx *gin.Context, err error) {
 		Message:    err.Error(),
 		Traceback:  fmt.Sprintf("%+v", err),
 	})
+	ctx.Abort()
 }
