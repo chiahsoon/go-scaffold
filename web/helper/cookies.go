@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"github.com/chiahsoon/go_scaffold/internal"
 	"net/http"
 
 	"github.com/chiahsoon/go_scaffold/internal/models"
@@ -24,7 +23,7 @@ func SetCookieSecurely(ctx *gin.Context, cookieKeyName, token string) {
 func GetValidCookie(ctx *gin.Context, cookieKeyName string) (string, error) {
 	cookieToken, err := ctx.Cookie(cookieKeyName)
 	if err != nil || cookieToken == "" {
-		return "", models.NewUnauthorizedError(internal.InvalidCookieValue)
+		return "", models.NewUnauthorizedError(InvalidCookieValue)
 	}
 
 	return cookieToken, nil

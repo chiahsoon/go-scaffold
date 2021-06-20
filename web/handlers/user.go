@@ -1,32 +1,37 @@
 package handlers
 
 import (
-	"github.com/chiahsoon/go_scaffold/internal/models/auth"
-	"net/http"
-
+	"github.com/chiahsoon/go_scaffold/internal"
 	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/chiahsoon/go_scaffold/web/helper"
+	"github.com/chiahsoon/go_scaffold/web/view"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
+	"net/http"
 )
 
 const (
 	AccessTokenCookieKeyName = "access_token"
 )
 
-var handler = auth.TokenHandler{}
-
 func Home(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, "<h1>Welcome!</h1>")
 }
 
 func Login(ctx *gin.Context) {
-	var req models.EmailLoginRequest
+	var req view.EmailLoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		helper.BadRequestResponse(ctx, err)
+		helper.ErrorToErrorResponse(ctx, models.NewBadRequestError(err.Error()))
 		return
 	}
 
-	user, accessToken, err := handler.Login(req.Email, req.Password)
+	user, err := internal.UserService.GetUserByEmail(internal.DB, req.Email)
+	if err != nil {
+		helper.UnauthorizedResponse(ctx, err)
+		return
+	}
+
+	accessToken, err := internal.AuthService.ExchangePasswordForAccessToken(req.Password, user)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
@@ -37,13 +42,31 @@ func Login(ctx *gin.Context) {
 }
 
 func Signup(ctx *gin.Context) {
-	var req models.SignupRequest
+	var req view.SignupRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		helper.BadRequestResponse(ctx, err)
 		return
 	}
 
-	user, accessToken, err := handler.Register(req.Name, req.Username, req.Email, req.Password)
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.MinCost)
+	if err != nil {
+		helper.ErrorToErrorResponse(ctx, models.NewInternalServerError(err.Error()))
+		return
+	}
+
+	user := models.User{
+		Name:     req.Name,
+		Username: req.Username,
+		Email:    req.Email,
+		Password: string(hash),
+	}
+
+	if err = internal.UserService.CreateUser(internal.DB, user); err != nil {
+		helper.ErrorToErrorResponse(ctx, err)
+		return
+	}
+
+	accessToken, err := internal.AuthService.GetAccessTokenForNewUser(&user)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
@@ -60,7 +83,13 @@ func Logout(ctx *gin.Context) {
 
 func CurrentUser(ctx *gin.Context) {
 	accessTokenString, _ := helper.GetValidCookie(ctx, AccessTokenCookieKeyName) // Assume no error
-	user, err := handler.GetCurrentUser(accessTokenString)
+	userID, err := internal.AuthService.GetUserIDFromAccessToken(accessTokenString)
+	if err != nil {
+		helper.ErrorToErrorResponse(ctx, err)
+		return
+	}
+
+	user, err := internal.UserService.GetUserByID(internal.DB, userID)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
@@ -77,7 +106,7 @@ func IsAuthenticated(ctx *gin.Context) {
 		return
 	}
 
-	if err := handler.ValidateToken(accessTokenString); err != nil {
+	if err := internal.AuthService.ValidateToken(accessTokenString); err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		ctx.Abort()
 		return

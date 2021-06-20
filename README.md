@@ -18,6 +18,36 @@ Robust backend API scaffold written in Go with the following features:
 
 ## Setup Local `dev` Environment
 
+* Define your config files. Here are some examples to get started with.
+
+**Local**
+```yaml
+databases:
+  go_scaffold:
+    user: root
+    password: ""
+    protocol: tcp
+    address: localhost:3306
+port: 8081
+access_token_secret: "super_secret_key" # For JWTs
+domain: localhost
+cookie_secure: false
+```
+
+**Docker**
+```yaml
+databases:
+   go_scaffold:
+      user: root
+      password: ""
+      protocol: tcp
+      address: db:3306
+port: 8081
+access_token_secret: "super_secret_key" # For JWTs
+domain: localhost
+cookie_secure: false
+```
+
 ### Manual
 1. Export the appropriate environment variables.
    ``` 

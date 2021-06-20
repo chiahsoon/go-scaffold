@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/chiahsoon/go_scaffold/internal"
 	"log"
 	"os"
 	"strings"
@@ -40,6 +41,8 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to initialise database: \n", err)
 	}
+
+	initServices()
 
 	// fmt.Println("FLAG: ", os.Args[1:])
 	web.Run()
@@ -137,8 +140,12 @@ func initDB() error {
 		return err
 	}
 
-	models.DB = db
-	err = models.DB.AutoMigrate(&models.User{})
+	internal.DB = db
+	err = internal.DB.AutoMigrate(&models.User{})
 
 	return err
+}
+
+func initServices() {
+	internal.Init()
 }

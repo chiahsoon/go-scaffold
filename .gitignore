@@ -5,3 +5,5 @@ docs/swagger.*
 go.sum*.tmp
 go.mod*.tmp
 bin
+configs/*.yaml
+configs/*.yml

@@ -5,8 +5,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-
 // Base contains common columns for all tables.
 type Base struct {
 	ID        string `gorm:"type:string;primary_key;" json:"id"`
