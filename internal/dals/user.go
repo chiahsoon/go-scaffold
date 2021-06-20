@@ -7,7 +7,7 @@ import (
 
 type UserDAL struct{}
 
-func (dal UserDAL) CreateUser(tx *gorm.DB, user models.User) error {
+func (dal UserDAL) Create(tx *gorm.DB, user models.User) error {
 	if ret := tx.Create(&user); ret.Error != nil {
 		return models.NewInternalServerError(ret.Error.Error())
 	}
@@ -15,12 +15,12 @@ func (dal UserDAL) CreateUser(tx *gorm.DB, user models.User) error {
 	return nil
 }
 
-func (dal UserDAL) GetUserByEmail(tx *gorm.DB, email string) (*models.User, error) {
+func (dal UserDAL) GetByEmail(tx *gorm.DB, email string) (*models.User, error) {
 	queryString := "email = ?"
 	return queryUser(tx, queryString, email)
 }
 
-func (dal UserDAL) GetUserByID(tx *gorm.DB, id string) (*models.User, error) {
+func (dal UserDAL) GetByID(tx *gorm.DB, id string) (*models.User, error) {
 	queryString := "id = ?"
 	return queryUser(tx, queryString, id)
 }

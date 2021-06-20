@@ -4,7 +4,6 @@ import (
 	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -14,25 +13,11 @@ const (
 
 type AuthService struct{}
 
-func (h AuthService) ExchangePasswordForTokenPair(password string, user *models.User) (string, string, error) {
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return "", "", models.NewUnauthorizedError(InvalidPassword)
-	}
-
-	accessToken, refreshToken, err := generateTokenPair(user)
-	if err != nil {
-		return "", "", err
-	}
-
-	return accessToken, refreshToken, nil
-}
-
 func (h AuthService) Logout() error {
 	return nil
 }
 
-func (h AuthService) GetTokenPairForNewUser(user *models.User) (string, string, error) {
+func (h AuthService) GetTokenPairForUser(user *models.User) (string, string, error) {
 	accessToken, refreshToken, err := generateTokenPair(user)
 	if err != nil {
 		return "", "", err
@@ -66,7 +51,6 @@ func (h AuthService) GetUserIDFromAccessToken(accessToken string) (string, error
 	return claims.Subject, nil
 }
 
-
 func (h AuthService) Refresh(accessTokenString, refreshTokenString string) (string, error) {
 	refreshTokenSecret := viper.GetString(RefreshTokenConfigSecretKeyName)
 	userID, err := h.GetUserIDFromAccessToken(accessTokenString)
@@ -83,7 +67,7 @@ func (h AuthService) Refresh(accessTokenString, refreshTokenString string) (stri
 	}
 
 	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
-	return GenerateToken(userID, accessTokenSecret, AccessTokenExpiryMinutes)
+	return generateToken(userID, accessTokenSecret, AccessTokenExpiryMinutes)
 }
 
 

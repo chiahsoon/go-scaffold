@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/chiahsoon/go_scaffold/internal"
+	"github.com/chiahsoon/go_scaffold/internal/auth"
 	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/chiahsoon/go_scaffold/web/helper"
 	"github.com/chiahsoon/go_scaffold/web/view"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	AccessTokenCookieKeyName = "access_token"
+	AccessTokenCookieKeyName  = "access_token"
 	RefreshTokenCookieKeyName = "refresh_token"
 )
 
@@ -28,24 +29,28 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	user, err := internal.UserService.GetUserByEmail(internal.DB, req.Email)
+	user, err := internal.UserService.GetByEmail(internal.DB, req.Email)
 	if err != nil {
 		helper.UnauthorizedResponse(ctx, err)
 		return
 	}
 
-	accessToken, refreshToken, err := internal.AuthService.ExchangePasswordForTokenPair(req.Password, user)
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		helper.UnauthorizedResponse(ctx, models.NewUnauthorizedError(auth.InvalidPassword))
+		return
+	}
+
+	accessToken, refreshToken, err := internal.AuthService.GetTokenPairForUser(user)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
 
-	uwt := &models.UserRefreshToken{UserID: user.ID, RefreshToken: refreshToken}
-	if err := internal.UserRefreshTokenService.Upsert(internal.DB, uwt); err != nil {
+	urt := &models.UserRefreshToken{UserID: user.ID, RefreshToken: refreshToken}
+	if err = internal.UserRefreshTokenService.Upsert(internal.DB, urt); err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
-
 
 	helper.SetCookieSecurely(ctx, AccessTokenCookieKeyName, accessToken)
 	helper.SetCookieSecurely(ctx, RefreshTokenCookieKeyName, refreshToken)
@@ -72,19 +77,19 @@ func Signup(ctx *gin.Context) {
 		Password: string(hash),
 	}
 
-	if err = internal.UserService.CreateUser(internal.DB, user); err != nil {
+	if err = internal.UserService.Create(internal.DB, user); err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
 
-	accessToken, refreshToken, err := internal.AuthService.GetTokenPairForNewUser(&user)
+	accessToken, refreshToken, err := internal.AuthService.GetTokenPairForUser(&user)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
 
 	uwt := &models.UserRefreshToken{UserID: user.ID, RefreshToken: refreshToken}
-	if err := internal.UserRefreshTokenService.Upsert(internal.DB, uwt); err != nil {
+	if err = internal.UserRefreshTokenService.Upsert(internal.DB, uwt); err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
 	}
@@ -112,7 +117,7 @@ func CurrentUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := internal.UserService.GetUserByID(internal.DB, userID)
+	user, err := internal.UserService.GetByID(internal.DB, userID)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
 		return
@@ -149,5 +154,4 @@ func IsAuthenticated(ctx *gin.Context) {
 	}
 
 	helper.SetCookieSecurely(ctx, AccessTokenCookieKeyName, newAT)
-	return
 }
