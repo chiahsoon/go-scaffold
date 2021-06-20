@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/chiahsoon/go_scaffold/internal"
 	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/chiahsoon/go_scaffold/web/helper"
 	"github.com/chiahsoon/go_scaffold/web/view"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
 )
 
 const (
@@ -82,7 +83,7 @@ func Logout(ctx *gin.Context) {
 }
 
 func CurrentUser(ctx *gin.Context) {
-	accessTokenString, _ := helper.GetValidCookie(ctx, AccessTokenCookieKeyName) // Assume no error
+	accessTokenString := helper.GetValidCookie(ctx, AccessTokenCookieKeyName) // Assume no error
 	userID, err := internal.AuthService.GetUserIDFromAccessToken(accessTokenString)
 	if err != nil {
 		helper.ErrorToErrorResponse(ctx, err)
@@ -99,12 +100,7 @@ func CurrentUser(ctx *gin.Context) {
 }
 
 func IsAuthenticated(ctx *gin.Context) {
-	accessTokenString, err := helper.GetValidCookie(ctx, AccessTokenCookieKeyName)
-	if err != nil {
-		helper.ErrorToErrorResponse(ctx, err)
-		ctx.Abort()
-		return
-	}
+	accessTokenString := helper.GetValidCookie(ctx, AccessTokenCookieKeyName)
 
 	if err := internal.AuthService.ValidateToken(accessTokenString); err != nil {
 		helper.ErrorToErrorResponse(ctx, err)

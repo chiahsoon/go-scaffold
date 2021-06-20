@@ -3,7 +3,6 @@ package helper
 import (
 	"net/http"
 
-	"github.com/chiahsoon/go_scaffold/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -20,13 +19,13 @@ func SetCookieSecurely(ctx *gin.Context, cookieKeyName, token string) {
 	ctx.SetCookie(cookieKeyName, token, 0, "/", domain, secure, true)
 }
 
-func GetValidCookie(ctx *gin.Context, cookieKeyName string) (string, error) {
+func GetValidCookie(ctx *gin.Context, cookieKeyName string) string {
 	cookieToken, err := ctx.Cookie(cookieKeyName)
 	if err != nil || cookieToken == "" {
-		return "", models.NewUnauthorizedError(InvalidCookieValue)
+		return ""
 	}
 
-	return cookieToken, nil
+	return cookieToken
 }
 
 func RemoveCookieSafely(ctx *gin.Context, cookieKeyName string) {

@@ -44,9 +44,9 @@ func (h AuthService) GetAccessTokenForNewUser(user *models.User) (string, error)
 
 func (h AuthService) ValidateToken(accessTokenString string) error {
 	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
-	expired, err := HasExpired(accessTokenString, accessTokenSecret)
-	if err != nil || expired {
-		return models.NewUnauthorizedError(InvalidAccessToken)
+	err := isTokenValid(accessTokenString, accessTokenSecret)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -54,10 +54,15 @@ func (h AuthService) ValidateToken(accessTokenString string) error {
 
 func (h AuthService) GetUserIDFromAccessToken(accessToken string) (string, error) {
 	accessTokenSecret := viper.GetString(AccessTokenConfigSecretKeyName)
-	claims, err := ExtractTokenClaims(accessToken, accessTokenSecret)
+	jwtToken, err := tokenStringToJwtToken(accessToken, accessTokenSecret)
 	if err != nil {
 		return "", err
 	}
 
-	return claims[ClaimsUserIDKeyName].(string), nil
+	claims, err := extractTokenClaims(jwtToken)
+	if err != nil {
+		return "", err
+	}
+
+	return claims.Subject, nil
 }
